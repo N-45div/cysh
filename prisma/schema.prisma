@@ -1,0 +1,84 @@
+// Shadow OTC Nexus - Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String      @id @default(uuid()) @db.Uuid
+  telegramId     BigInt      @unique @map("telegram_id")
+  walletAddress  String      @unique @map("wallet_address")
+  username       String?
+  kycAttestation String?     @map("kyc_attestation")
+  kycStatus      KycStatus   @default(none) @map("kyc_status")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  orders         OrderTracking[]
+  auditLogs      AuditLog[]
+
+  @@index([telegramId])
+  @@index([walletAddress])
+  @@map("users")
+}
+
+model OrderTracking {
+  id         String      @id @default(uuid()) @db.Uuid
+  orderId    String      @unique @map("order_id")
+  telegramId BigInt      @map("telegram_id")
+  orderType  OrderType   @map("order_type")
+  tokenPair  String      @map("token_pair")
+  amount     Decimal?    @db.Decimal(20, 6)
+  status     OrderStatus @default(pending)
+  matchId    String?     @map("match_id")
+  settledTx  String?     @map("settled_tx")
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  matchedAt  DateTime?   @map("matched_at") @db.Timestamptz(6)
+  settledAt  DateTime?   @map("settled_at") @db.Timestamptz(6)
+  user       User        @relation(fields: [telegramId], references: [telegramId], onDelete: Cascade)
+
+  @@index([telegramId])
+  @@index([status])
+  @@map("order_tracking")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  telegramId BigInt?  @map("telegram_id")
+  action     String
+  details    Json?    @db.JsonB
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user       User?    @relation(fields: [telegramId], references: [telegramId])
+
+  @@index([telegramId])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+enum KycStatus {
+  none
+  pending
+  verified
+  expired
+}
+
+enum OrderType {
+  buy
+  sell
+}
+
+enum OrderStatus {
+  pending
+  matched
+  settling
+  settled
+  cancelled
+  failed
+}
