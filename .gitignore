@@ -53,3 +53,66 @@ keypairs/*.json
 tmp/
 temp/
 *.tmp
+
+# TypeScript
+*.tsbuildinfo
+.eslintcache
+
+# PNPM
+.pnpm-store/
+.pnpm-debug.log*
+
+# Build caches / monorepo
+.turbo/
+.cache/
+
+# Web frameworks (optional)
+.next/
+.nuxt/
+.svelte-kit/
+out/
+
+# Rust extras
+*.rs.bk
+*.rlib
+
+# WASM
+*.wasm
+
+# Env & secrets
+.envrc
+.direnv/
+*.key
+*.pem
+*.p12
+secrets/
+.secrets/
+
+# OS extra
+Icon\r
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# IDE extra
+*.iml
+
+# Coverage extras
+.nyc_output/
+
+# Archives
+*.tgz
+
+# Hosting configs
+.vercel/
+.netlify/
+
+# Other package manager lockfiles (we use pnpm)
+package-lock.json
+yarn.lock
+
+# integration docs
+ER_INTEGRATION.md
+magic-block-docs
+arcium-integ.md

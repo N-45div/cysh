@@ -1,0 +1,31 @@
+{
+  "name": "@shadow-otc/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Shadow OTC Nexus",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@solana/web3.js": "^1.95.8",
+    "@solana/spl-token": "^0.4.9",
+    "@magicblock-labs/ephemeral-rollups-sdk": "^0.3.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2"
+  },
+  "keywords": [
+    "solana",
+    "otc",
+    "privacy",
+    "arcium",
+    "magicblock"
+  ],
+  "license": "MIT"
+}

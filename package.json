@@ -12,7 +12,19 @@
     "build": "tsc",
     "dev": "tsx watch app/telegram-bot/src/index.ts",
     "test": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build:repo": "pnpm -r build",
+    "dev:repo": "pnpm -r --parallel dev",
+    "test:unit": "vitest",
+    "test:integration": "vitest",
+    "test:e2e": "vitest",
+    "test:load": "vitest",
+    "deploy:devnet": "tsx scripts/deploy-devnet.ts",
+    "deploy:programs": "tsx scripts/deploy-programs.ts",
+    "deploy:magicblock": "tsx scripts/init-magicblock-session.ts",
+    "prepare": "husky install",
+    "format": "prettier -w .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -26,7 +38,13 @@
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "eslint": "^9.13.0",
+    "prettier": "^3.3.3",
+    "@typescript-eslint/parser": "^7.16.1",
+    "@typescript-eslint/eslint-plugin": "^7.16.1",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.10"
   },
   "engines": {
     "node": ">=18.0.0",
