@@ -16,9 +16,14 @@ export * as solana from './solana';
 // Settlement program
 export * as settlement from './settlement';
 
-// Re-export key types for convenience
-export type { Order, MatchResult, ArciumClient, ArciumConfig } from './arcium';
-export type { ERConfig, MagicConnection } from './magicblock';
+// Solana Attestation Service (KYC)
+export * as sas from './sas';
+
+// Re-export key types and classes for convenience
+export type { Order, MatchResult, ArciumConfig } from './arcium';
+export { ArciumClient } from './arcium';
+export type { ERConfig } from './magicblock';
+export { MagicConnection } from './magicblock';
 export type {
   Token22MintConfig,
 } from './solana';

@@ -14,8 +14,14 @@ model User {
   telegramId     BigInt      @unique @map("telegram_id")
   walletAddress  String      @unique @map("wallet_address")
   username       String?
-  kycAttestation String?     @map("kyc_attestation")
+  kycAttestation String?     @map("kyc_attestation") // SAS attestation PDA
+  kycSchema      String?     @map("kyc_schema") // SAS schema PDA
+  kycCredential  String?     @map("kyc_credential") // SAS credential PDA
+  kycProvider    String?     @map("kyc_provider") // civic, sumsub, mock
+  kycSessionId   String?     @map("kyc_session_id") // Provider session ID
   kycStatus      KycStatus   @default(none) @map("kyc_status")
+  kycVerifiedAt  DateTime?   @map("kyc_verified_at") @db.Timestamptz(6)
+  kycExpiresAt   DateTime?   @map("kyc_expires_at") @db.Timestamptz(6)
   createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
   orders         OrderTracking[]
@@ -23,6 +29,7 @@ model User {
 
   @@index([telegramId])
   @@index([walletAddress])
+  @@index([kycStatus])
   @@map("users")
 }
 
@@ -33,6 +40,7 @@ model OrderTracking {
   orderType  OrderType   @map("order_type")
   tokenPair  String      @map("token_pair")
   amount     Decimal?    @db.Decimal(20, 6)
+  price      Decimal?    @db.Decimal(20, 6)
   status     OrderStatus @default(pending)
   matchId    String?     @map("match_id")
   settledTx  String?     @map("settled_tx")
