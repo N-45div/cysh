@@ -23,8 +23,10 @@ import {
 export interface ArciumConfig {
   /** Solana RPC endpoint */
   rpcUrl: string;
-  /** MXE cluster offset (e.g., 1078779259 for devnet) */
+  /** MXE cluster offset (active cluster with DKG) */
   clusterOffset: number;
+  /** Node offset */
+  nodeOffset?: number;
   /** Arcium matching program ID */
   programId: PublicKey;
   /** Optional: Custom wallet for signing */
@@ -68,8 +70,17 @@ export class ArciumClient {
   /**
    * Initialize the match_orders computation definition (one-time setup)
    * Must be called before any orders can be matched
+   * 
+   * ⚠️ PLACEHOLDER: Not production-ready until @arcium-hq/client integration
    */
   async initializeComputationDefinition(payer: Keypair): Promise<string> {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'Arcium SDK is not production-ready. ' +
+        'Waiting for @arcium-hq/client integration and DKG completion on cluster 4040404.'
+      );
+    }
+    
     // TODO: Implement with actual program
     // Call init_match_orders_comp_def instruction
     
@@ -84,6 +95,8 @@ export class ArciumClient {
   /**
    * Submit two orders for encrypted matching
    * 
+   * ⚠️ PLACEHOLDER: Not production-ready until @arcium-hq/client integration
+   * 
    * @param bidOrder - Buy order
    * @param askOrder - Sell order
    * @param payer - Transaction payer and signer
@@ -94,6 +107,13 @@ export class ArciumClient {
     askOrder: Order,
     payer: Keypair
   ): Promise<MatchOperationResult> {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'Arcium SDK is not production-ready. ' +
+        'Waiting for @arcium-hq/client integration and DKG completion on cluster 4040404.'
+      );
+    }
+    
     // 1. Encrypt both orders
     const encryptedBid = await prepareEncryptedOrder(bidOrder, this.config.clusterOffset);
     const encryptedAsk = await prepareEncryptedOrder(askOrder, this.config.clusterOffset);
@@ -195,8 +215,10 @@ export class ArciumClient {
 
 /**
  * Default Arcium devnet configuration
+ * Cluster 4040404 - DKG active as of Oct 21, 2025
  */
 export const DEFAULT_ARCIUM_CONFIG: Partial<ArciumConfig> = {
   rpcUrl: 'https://api.devnet.solana.com',
-  clusterOffset: 1078779259, // Devnet cluster offset (example)
+  clusterOffset: 4040404, // Active cluster with DKG
+  nodeOffset: 2390982837, // Your node offset (if operating a node)
 };

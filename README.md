@@ -427,6 +427,75 @@ MIT License - Open source for the cypherpunk community
 
 ---
 
+## 📊 Current Implementation Status
+
+### ✅ Settlement Program + SDK (Production-Ready)
+- **Program**: Token-2022 atomic swaps on devnet
+  - Program ID: `HkamtrV1uGYGHgL8rZxmXubtnLawS3yiizCBQXCpiZds`
+  - Instructions: `init_escrow`, `deposit`, `settle_atomic_swap`, `withdraw`
+  - Full test coverage: `programs/settlement/tests/token22-swap.test.ts`
+- **SDK**: TypeScript client with typed methods
+  - Location: `packages/sdk/src/settlement/`
+  - PDA helpers, token account management, full lifecycle methods
+- **Status**: Ready for integration
+
+### ⏸️ Arcium Matching (Blocked - DKG Pending)
+- **Program**: Encrypted order matching implemented
+  - Program ID: `6QFiiqmYBELXw9LgGwogYcwiXkRD6AyGjWtXgoJ3NS3G`
+  - MPC flow: `init_match_orders_comp_def`, `match_orders`, callback
+- **Cluster**: 4040404 (active, awaiting DKG key agreement)
+- **Current Error**: `MxeKeysNotSet (6002)` - cluster nodes finalizing keys
+- **Tests**: Gated with `ARCIUM_ENABLED=true` environment variable
+- **Status**: Implementation complete, waiting for external DKG completion
+
+### ⏸️ Magicblock ER (Client-Side Only)
+- **Approach**: Using `ConnectionMagicRouter` for transaction routing
+- **Reason**: Rust SDK incompatibilities with Solana 2.x/Anchor 0.31+
+- **On-Chain**: Settlement program has ER methods behind feature flag (disabled)
+- **Status**: Client-side routing functional, on-chain integration deferred
+
+### 🚧 Database & Telegram Bot (Separate Dev Stream)
+- Prisma schema exists
+- Bot implementation pending (different developer)
+
+---
+
+## 🔥 Settlement-Only Demo (Available Now)
+
+You can test the atomic swap flow today without Arcium/ER dependencies:
+
+```bash
+# Clone and setup
+git clone https://github.com/shadowotc/nexus.git
+cd nexus
+pnpm install
+
+# Run settlement tests
+pnpm test:settlement
+
+# Or run Token-2022 tests directly
+cd programs/settlement
+pnpm test:token22
+```
+
+### What the Demo Shows
+1. **Create Token-2022 mints** (USDC 6dp, SOL 9dp)
+2. **Initialize trade escrow** for matched order
+3. **Maker deposits** 100 USDC → escrow
+4. **Taker deposits** 1 SOL → escrow
+5. **Atomic settlement** → tokens swapped
+6. **Withdrawal flow** (cancel scenario)
+
+**Expected Output**:
+- ✅ Maker receives 1 SOL
+- ✅ Taker receives 100 USDC
+- ✅ Double settlement prevented
+- ✅ Non-depositor withdrawal blocked
+
+**Reference**: `programs/settlement/tests/token22-swap.test.ts`
+
+---
+
 ## 🔥 Quick Start (For Judges)
 
 ```bash

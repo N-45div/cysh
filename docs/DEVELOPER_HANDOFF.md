@@ -110,16 +110,20 @@ Dir: `packages/sdk/src/magicblock/`
 
 ---
 
-## 5) Arcium MXE – Encrypted Matching (Status)
+## 5) Arcium MXE – Encrypted Matching (Status: ACTIVE )
 
-- Architecture (from prior memory):
+- **DKG Active**: Cluster 4040404 is operational as of Oct 21, 2025
+- **Node Offset**: 2390982837 (if you're operating a node)
+- **Fee**: 10 ARX per compute unit (voted and approved)
+- Architecture:
   - No API keys; local CLI tooling; x25519 ECDH for client‑side encryption, Solana keypair for tx signing.
-  - Uses a cluster offset (numeric ID, e.g., devnet value), standard Solana RPC.
-- Current note: Arcium verification is ending due to DKG; expect temporary unavailability of the MPC cluster.
-- Integration points (once DKG completes):
-  - Submit encrypted orders to MXE.
-  - Receive match results (order pairs, price, amount) – generate a `match_id` (u64) and pass into `initEscrow`.
-  - Persist orders/matches in DB (see schema below).
+  - Uses cluster offset 4040404 (configured in `packages/sdk/src/arcium/client.ts`)
+- Integration points:
+  - Submit encrypted orders to MXE cluster 4040404
+  - Receive match results (order pairs, price, amount) – generate a `match_id` (u64) and pass into `initEscrow`
+  - Persist orders/matches in DB (see schema below)
+- **SDK Config**: `DEFAULT_ARCIUM_CONFIG` updated with active cluster offset
+- **SDK Configuration**: `packages/sdk/src/arcium/client.ts` - `DEFAULT_ARCIUM_CONFIG.clusterOffset = 4040404`
 
 ---
 

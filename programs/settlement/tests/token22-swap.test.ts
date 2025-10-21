@@ -387,4 +387,202 @@ describe("Token-2022 Atomic Swaps", () => {
       console.log("✓ Double settlement prevented");
     }
   });
+
+  describe("Withdrawal (Cancel Flow)", () => {
+    let cancelMatchId: BN;
+    let cancelEscrowPda: PublicKey;
+    let cancelMakerKeypair: Keypair;
+    let cancelTakerKeypair: Keypair;
+    let cancelUsdcMint: Keypair;
+    let cancelMakerUsdcAccount: PublicKey;
+    let cancelEscrowUsdcAccount: PublicKey;
+
+    before(async () => {
+      // Create new keypairs for cancel test
+      cancelMakerKeypair = Keypair.generate();
+      cancelTakerKeypair = Keypair.generate();
+
+      // Fund them
+      const fundTx = new Transaction()
+        .add(
+          SystemProgram.transfer({
+            fromPubkey: payer.publicKey,
+            toPubkey: cancelMakerKeypair.publicKey,
+            lamports: 2 * anchor.web3.LAMPORTS_PER_SOL,
+          })
+        )
+        .add(
+          SystemProgram.transfer({
+            fromPubkey: payer.publicKey,
+            toPubkey: cancelTakerKeypair.publicKey,
+            lamports: 2 * anchor.web3.LAMPORTS_PER_SOL,
+          })
+        );
+      await sendAndConfirmTransaction(connection, fundTx, [payer.payer]);
+
+      // Create new Token-2022 mint for cancel test
+      cancelUsdcMint = await createToken22Mint(6);
+
+      // Create token accounts
+      cancelMakerUsdcAccount = await createATA(
+        cancelUsdcMint.publicKey,
+        cancelMakerKeypair.publicKey
+      );
+
+      // Mint tokens to maker
+      await mintTokens(cancelUsdcMint.publicKey, cancelMakerUsdcAccount, 500_000000); // 500 USDC
+
+      // Create new escrow
+      cancelMatchId = new BN(Date.now() + 1000);
+      [cancelEscrowPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("trade_escrow"), cancelMatchId.toArrayLike(Buffer, "le", 8)],
+        program.programId
+      );
+
+      cancelEscrowUsdcAccount = getAssociatedTokenAddressSync(
+        cancelUsdcMint.publicKey,
+        cancelEscrowPda,
+        true,
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      // Initialize escrow
+      await program.methods
+        .initEscrow(
+          cancelMatchId,
+          cancelMakerKeypair.publicKey,
+          cancelTakerKeypair.publicKey,
+          cancelUsdcMint.publicKey,
+          solMint.publicKey,
+          new BN(200_000000), // 200 USDC
+          new BN(2_000000000) // 2 SOL
+        )
+        .accounts({
+          authority: payer.publicKey,
+        })
+        .rpc();
+
+      // Create escrow token account
+      const createEscrowAtaTx = new Transaction().add(
+        createAssociatedTokenAccountIdempotentInstruction(
+          payer.publicKey,
+          cancelEscrowUsdcAccount,
+          cancelEscrowPda,
+          cancelUsdcMint.publicKey,
+          TOKEN_2022_PROGRAM_ID
+        )
+      );
+      await sendAndConfirmTransaction(connection, createEscrowAtaTx, [payer.payer]);
+
+      // Maker deposits
+      await program.methods
+        .deposit(new BN(200_000000))
+        .accounts({
+          depositor: cancelMakerKeypair.publicKey,
+          tradeEscrow: cancelEscrowPda,
+          mint: cancelUsdcMint.publicKey,
+          depositorTokenAccount: cancelMakerUsdcAccount,
+          escrowTokenAccount: cancelEscrowUsdcAccount,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([cancelMakerKeypair])
+        .rpc();
+
+      console.log("✓ Cancel test escrow setup complete");
+    });
+
+    it("Allows maker to withdraw before settlement", async () => {
+      const makerBalanceBefore = await getAccount(
+        connection,
+        cancelMakerUsdcAccount,
+        undefined,
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      await program.methods
+        .withdraw()
+        .accounts({
+          withdrawer: cancelMakerKeypair.publicKey,
+          tradeEscrow: cancelEscrowPda,
+          mint: cancelUsdcMint.publicKey,
+          escrowTokenAccount: cancelEscrowUsdcAccount,
+          withdrawerTokenAccount: cancelMakerUsdcAccount,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([cancelMakerKeypair])
+        .rpc();
+
+      const makerBalanceAfter = await getAccount(
+        connection,
+        cancelMakerUsdcAccount,
+        undefined,
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      // Maker should have received 200 USDC back
+      assert.equal(
+        makerBalanceAfter.amount - makerBalanceBefore.amount,
+        200_000000n
+      );
+
+      console.log("✓ Maker successfully withdrew 200 USDC");
+    });
+
+    it("Prevents non-depositor from withdrawing", async () => {
+      // Create new escrow for this test
+      const testMatchId = new BN(Date.now() + 2000);
+      const [testEscrowPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("trade_escrow"), testMatchId.toArrayLike(Buffer, "le", 8)],
+        program.programId
+      );
+
+      await program.methods
+        .initEscrow(
+          testMatchId,
+          cancelMakerKeypair.publicKey,
+          cancelTakerKeypair.publicKey,
+          cancelUsdcMint.publicKey,
+          solMint.publicKey,
+          new BN(100_000000),
+          new BN(1_000000000)
+        )
+        .accounts({
+          authority: payer.publicKey,
+        })
+        .rpc();
+
+      const testEscrowUsdcAccount = getAssociatedTokenAddressSync(
+        cancelUsdcMint.publicKey,
+        testEscrowPda,
+        true,
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      // Taker tries to withdraw without depositing
+      try {
+        const takerUsdcAccount = await createATA(
+          cancelUsdcMint.publicKey,
+          cancelTakerKeypair.publicKey
+        );
+
+        await program.methods
+          .withdraw()
+          .accounts({
+            withdrawer: cancelTakerKeypair.publicKey,
+            tradeEscrow: testEscrowPda,
+            mint: cancelUsdcMint.publicKey,
+            escrowTokenAccount: testEscrowUsdcAccount,
+            withdrawerTokenAccount: takerUsdcAccount,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([cancelTakerKeypair])
+          .rpc();
+
+        assert.fail("Should have thrown error");
+      } catch (err: any) {
+        assert.include(err.toString(), "NoDeposit");
+        console.log("✓ Non-depositor withdrawal prevented");
+      }
+    });
+  });
 });

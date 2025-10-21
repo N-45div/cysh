@@ -64,6 +64,9 @@ export interface MatchResult {
 
 /**
  * Generate an ephemeral x25519 keypair for ECDH
+ * 
+ * ⚠️ PLACEHOLDER: Replace with @arcium-hq/client implementation
+ * This is a stub for development. Do not use in production.
  */
 export function generateX25519KeyPair(): X25519KeyPair {
   // TODO: Use @arcium-hq/client implementation
@@ -81,6 +84,9 @@ export function generateX25519KeyPair(): X25519KeyPair {
 
 /**
  * Derive shared secret from client private key and MXE public key via ECDH
+ * 
+ * ⚠️ PLACEHOLDER: Replace with @arcium-hq/client implementation
+ * This is a stub for development. Do not use in production.
  * 
  * @param clientPrivateKey - Client's x25519 private key
  * @param mxePublicKey - MXE cluster's x25519 public key
@@ -103,6 +109,9 @@ export function deriveSharedSecret(
 
 /**
  * Encrypt order data with RescueCipher (CTR mode)
+ * 
+ * ⚠️ PLACEHOLDER: Replace with @arcium-hq/client implementation
+ * This is a stub for development. Do not use in production.
  * 
  * @param order - Order to encrypt
  * @param sharedSecret - Shared secret from ECDH
@@ -140,6 +149,9 @@ export function encryptOrder(
 /**
  * Decrypt match result from MPC cluster
  * 
+ * ⚠️ PLACEHOLDER: Replace with @arcium-hq/client implementation
+ * This is a stub for development. Do not use in production.
+ * 
  * @param encryptedResult - Encrypted match result from MatchResultEvent
  * @param sharedSecret - Same shared secret used for encryption
  * @returns Decrypted match result
@@ -161,7 +173,10 @@ export function decryptMatchResult(
 /**
  * Fetch MXE cluster public key from on-chain account
  * 
- * @param clusterOffset - MXE cluster ID (e.g., 1078779259 for devnet)
+ * ⚠️ PLACEHOLDER: Replace with @arcium-hq/client implementation
+ * This is a stub for development. Do not use in production.
+ * 
+ * @param clusterOffset - MXE cluster ID (e.g., 4040404 for devnet)
  * @returns MXE cluster's x25519 public key
  */
 export async function fetchMXEClusterPublicKey(
