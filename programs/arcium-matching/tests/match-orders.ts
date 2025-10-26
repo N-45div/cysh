@@ -149,12 +149,31 @@ describe("arcium-matching: encrypted order matching", () => {
     console.log("init_match_orders_comp_def:", sig);
     
     // Wait for computation definition to be fully initialized
-    console.log("⏳ Waiting for computation definition to complete (30s)...");
-    await new Promise(resolve => setTimeout(resolve, 30000));
-    console.log("✓ Computation definition should be ready");
+    console.log("⏳ Waiting for computation definition to complete (60s)...");
+    console.log("   The circuit bytecode is being uploaded to the cluster");
+    await new Promise(resolve => setTimeout(resolve, 60000));
+    
+    // Verify it's ready
+    const finalCompDefAccount = await provider.connection.getAccountInfo(compDefAddress);
+    if (finalCompDefAccount && finalCompDefAccount.data.length > 200) {
+      console.log("✓ Computation definition ready! Account size:", finalCompDefAccount.data.length, "bytes");
+    } else {
+      console.log("⚠️  Computation definition may still be processing. Account size:", finalCompDefAccount?.data.length || 0, "bytes");
+      console.log("   Expected: ~228 bytes. You may need to wait longer or re-run the test.");
+    }
   });
 
   it("encrypts, queues, finalizes, and decrypts match result", async () => {
+    // Verify comp def is ready before proceeding
+    const compDefAccount = await provider.connection.getAccountInfo(initializedCompDefAddress);
+    if (!compDefAccount || compDefAccount.data.length < 200) {
+      throw new Error(
+        `Computation definition not ready. Account size: ${compDefAccount?.data.length || 0} bytes. ` +
+        `Expected: ~228 bytes. Please wait and re-run the test.`
+      );
+    }
+    console.log("✓ Computation definition verified ready:", compDefAccount.data.length, "bytes");
+    
     // 1) Prepare orders (compatible)
     const tokenMint = new PublicKey("So11111111111111111111111111111111111111112");
     const bidAmount = 1000n;

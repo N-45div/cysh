@@ -1,10 +1,11 @@
 use anchor_lang::prelude::*;
 use arcium_anchor::prelude::*;
+use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
 
 const COMP_DEF_OFFSET_ADD_TOGETHER: u32 = comp_def_offset("add_together");
 const COMP_DEF_OFFSET_MATCH_ORDERS: u32 = comp_def_offset("match_orders");
 
-declare_id!("6QFiiqmYBELXw9LgGwogYcwiXkRD6AyGjWtXgoJ3NS3G");
+declare_id!("4pugEiQsBghERnjwM6z9yrTPrGjwrzzwuV6cNP2hHqZF");
 
 #[arcium_program]
 pub mod arcium_matching {
@@ -63,7 +64,11 @@ pub mod arcium_matching {
 
     /// Initialize the match_orders computation definition (one-time setup)
     pub fn init_match_orders_comp_def(ctx: Context<InitMatchOrdersCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, true, 0, None, None)?;
+        let circuit_source = Some(CircuitSource::OffChain(OffChainCircuitSource {
+            source: "https://raw.githubusercontent.com/N-45div/cysh/main/public/circuits/match_orders.arcis".to_string(),
+            hash: [0; 32], // Hash verification not enforced yet
+        }));
+        init_comp_def(ctx.accounts, true, 0, circuit_source, None)?;
         Ok(())
     }
 

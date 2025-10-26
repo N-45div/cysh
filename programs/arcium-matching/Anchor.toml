@@ -9,7 +9,7 @@ skip-lint = false
 arcium_matching = "CgsWgvD6wepEsfxvrHexdSv77m3AvP3vdd4zH2D6Vewa"
 
 [programs.devnet]
-arcium_matching = "6QFiiqmYBELXw9LgGwogYcwiXkRD6AyGjWtXgoJ3NS3G"
+arcium_matching = "4pugEiQsBghERnjwM6z9yrTPrGjwrzzwuV6cNP2hHqZF"
 
 [registry]
 url = "https://api.apr.dev"
