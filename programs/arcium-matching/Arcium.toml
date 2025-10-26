@@ -13,5 +13,5 @@ backends = ["Cerberus"]
 # manticore_data_folders = []
 
 [devnet]
-cluster_offset = 4040404
+cluster_offset = 1078779259
 backends = ["Cerberus"]

@@ -39,16 +39,18 @@ describe("arcium-matching: encrypted order matching", () => {
   const program = anchor.workspace.ArciumMatching as Program<ArciumMatching>;
   const payer = provider.wallet as anchor.Wallet;
 
-  // Devnet cluster offset from Arcium.toml
-  const CLUSTER_OFFSET = 4040404;
+  // Devnet cluster offset from Arcium.toml - Official Arcium public cluster
+  const CLUSTER_OFFSET = 1078779259;
   const arciumClusterPubkey = getClusterAccAddress(CLUSTER_OFFSET);
+
+  // Store the initialized comp def address
+  let initializedCompDefAddress: PublicKey;
 
   // Skip tests if Arcium DKG is not ready
   before(function() {
     if (process.env.ARCIUM_ENABLED !== 'true') {
-      console.log('⚠️  Skipping Arcium tests: DKG not ready on cluster 4040404');
-      console.log('   Set ARCIUM_ENABLED=true to run these tests');
-      console.log('   Current error: MxeKeysNotSet (6002) - waiting for key agreement');
+      console.log('⚠️  Skipping Arcium tests: Set ARCIUM_ENABLED=true to run');
+      console.log('   Using official Arcium public cluster: 1078779259');
       this.skip();
     }
   });
@@ -114,12 +116,20 @@ describe("arcium-matching: encrypted order matching", () => {
   it("initializes computation definition (if needed)", async () => {
     const compDefOffset = Buffer.from(getCompDefAccOffset("match_orders")).readUInt32LE();
     const compDefAddress = getCompDefAccAddress(program.programId, compDefOffset);
+    
+    console.log("Computation definition offset:", compDefOffset);
+    console.log("Computation definition address:", compDefAddress.toBase58());
+    console.log("Check status with: solana account", compDefAddress.toBase58(), "-u devnet");
+
+    // Store for use in other tests
+    initializedCompDefAddress = compDefAddress;
 
     // Check if comp def already exists
     try {
       const compDefAccount = await provider.connection.getAccountInfo(compDefAddress);
       if (compDefAccount !== null) {
         console.log("✓ Computation definition already initialized, skipping");
+        console.log("  Account size:", compDefAccount.data.length, "bytes");
         return;
       }
     } catch (error) {
@@ -130,12 +140,18 @@ describe("arcium-matching: encrypted order matching", () => {
     const sig = await program.methods
       .initMatchOrdersCompDef()
       .accountsPartial({
+        payer: payer.publicKey,
         mxeAccount: getMXEAccAddress(program.programId),
         compDefAccount: compDefAddress,
       })
       .rpc({ commitment: "confirmed" });
 
     console.log("init_match_orders_comp_def:", sig);
+    
+    // Wait for computation definition to be fully initialized
+    console.log("⏳ Waiting for computation definition to complete (30s)...");
+    await new Promise(resolve => setTimeout(resolve, 30000));
+    console.log("✓ Computation definition should be ready");
   });
 
   it("encrypts, queues, finalizes, and decrypts match result", async () => {
@@ -223,10 +239,7 @@ describe("arcium-matching: encrypted order matching", () => {
         mxeAccount: getMXEAccAddress(program.programId),
         mempoolAccount: getMempoolAccAddress(program.programId),
         executingPool: getExecutingPoolAccAddress(program.programId),
-        compDefAccount: getCompDefAccAddress(
-          program.programId,
-          Buffer.from(getCompDefAccOffset("match_orders")).readUInt32LE(),
-        ),
+        compDefAccount: initializedCompDefAddress,
         clusterAccount: arciumClusterPubkey,
       })
       .rpc({ commitment: "confirmed" });

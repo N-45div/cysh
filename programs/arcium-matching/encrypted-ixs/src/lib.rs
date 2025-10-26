@@ -15,6 +15,22 @@ mod circuits {
         pub trader_id: u64,     // Trader's pubkey (first 8 bytes as u64 for matching)
     }
 
+    // Input containing both orders
+    pub struct MatchOrdersInput {
+        pub bid_token_mint: u64,
+        pub bid_side: u8,
+        pub bid_amount: u64,
+        pub bid_price: u64,
+        pub bid_expiry: u64,
+        pub bid_trader_id: u64,
+        pub ask_token_mint: u64,
+        pub ask_side: u8,
+        pub ask_amount: u64,
+        pub ask_price: u64,
+        pub ask_expiry: u64,
+        pub ask_trader_id: u64,
+    }
+
     // Result of matching two orders
     pub struct MatchResult {
         pub is_match: u8,           // Whether orders are compatible (1 = match, 0 = no match)
@@ -25,12 +41,27 @@ mod circuits {
     // Match two orders confidentially
     // Returns encrypted match result visible only to MXE and participants
     #[instruction]
-    pub fn match_orders(
-        bid_ctxt: Enc<Shared, Order>,
-        ask_ctxt: Enc<Shared, Order>,
-    ) -> Enc<Shared, MatchResult> {
-        let bid = bid_ctxt.to_arcis();
-        let ask = ask_ctxt.to_arcis();
+    pub fn match_orders(input_ctxt: Enc<Shared, MatchOrdersInput>) -> Enc<Shared, MatchResult> {
+        // Convert to arcis values
+        let input = input_ctxt.to_arcis();
+        
+        let bid = Order {
+            token_mint: input.bid_token_mint,
+            side: input.bid_side,
+            amount: input.bid_amount,
+            price: input.bid_price,
+            expiry: input.bid_expiry,
+            trader_id: input.bid_trader_id,
+        };
+        
+        let ask = Order {
+            token_mint: input.ask_token_mint,
+            side: input.ask_side,
+            amount: input.ask_amount,
+            price: input.ask_price,
+            expiry: input.ask_expiry,
+            trader_id: input.ask_trader_id,
+        };
 
         // Check if orders are compatible:
         // 1. Same token
@@ -65,7 +96,7 @@ mod circuits {
         };
 
         // Return encrypted result shared between client and MXE
-        bid_ctxt.owner.from_arcis(result)
+        input_ctxt.owner.from_arcis(result)
     }
 
     // Legacy add_together for testing (can be removed later)
